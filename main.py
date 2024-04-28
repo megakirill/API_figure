@@ -1,105 +1,137 @@
-from itertools import chain
-import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
+from itertools import chain  # объединение последовательностей в одну последовательность
+import matplotlib.pyplot as plt  # используется для создания графиков и визуализации данных
+from matplotlib.patches import Polygon  # используется для представления и отображения многоугольников
 from functools import reduce
-from math import cos, sin, radians
+import math
+import numpy as np
 
 
-def generate_pol(pol_specs):
-    return map(lambda spec: Polygon(spec), pol_specs)  # niggers_sucks
+def generate_pol(pol_list):
+    return map(lambda x: Polygon(x), pol_list)
 
 
-def transform_pol(polygon_sequence, transformations):
-    return map(lambda polygon: reduce(lambda p, t: t(p), transformations, polygon), polygon_sequence)
-
-
-def visual(polygon_sequence):
+def visual(pol_order):
     fig, ax = plt.subplots()
-    for polygon in polygon_sequence:
+    for polygon in pol_order:
         ax.add_patch(polygon)
     ax.autoscale()
     plt.axis('equal')
     plt.show()
 
 
-def gen_rectangle(start_point, width, height, spacing):
-    x, y = start_point
+def gen_rectangle(start, width, height, spacex, spacey):
+    x, y = start
     while True:
-        yield [(x, y), (x + width, y), (x + width, y + height), (x, y + height)]
-        x += width + spacing
+        yield [(x, y),
+               (x + width, y), (x + width, y + height),
+               (x, y + height)]
+
+        x += spacex
+        y += spacey
 
 
-def gen_triangle(start_point, side_length, spacing):
-    x, y = start_point
+def gen_triangle(start, side_length, spacex, spacey):
+    x, y = start
     while True:
-        yield [(x, y), (x + side_length, y), (x + side_length / 2, y + (3 ** 0.5 / 2) * side_length)]
-        x += side_length + spacing
+        yield [(x, y),
+               (x + side_length, y),
+               (x + side_length / 2, y + math.sqrt(side_length ** 2 + (side_length / 2) ** 2))]
+
+        x += spacex
+        y += spacey
 
 
-def gen_hexagon(start_point, side_length, spacing):
-    x, y = start_point
+def gen_six(start, side_length, spacex, spacey):
+    x, y = start
     while True:
-        yield [(x + side_length * (3 ** 0.5) / 2, y - side_length / 2),
-               (x + side_length * (3 ** 0.5), y),
-               (x + side_length * (3 ** 0.5) / 2, y + side_length / 2),
-               (x - side_length * (3 ** 0.5) / 2, y + side_length / 2),
-               (x - side_length * (3 ** 0.5), y),
-               (x - side_length * (3 ** 0.5) / 2, y - side_length / 2)]
-        x += 2 * side_length * (3 ** 0.5) + spacing
+        yield [(x, y),
+               (x + side_length, y),
+               (x + side_length * 3 / 2, y + (math.sqrt(3) / 2) * side_length),
+               (x + side_length, y + math.sqrt(3) * side_length),
+               (x, y + math.sqrt(3) * side_length),
+               (x - side_length / 2, y + (math.sqrt(3) / 2) * side_length)]
+
+        x += spacex
+        y += spacey
 
 
-def visual_inf(sequence, num_figures=7):
+def generate_figure(order, n):
+    if n == 1:
+        polygon = next(order)
+    else:
+        polygon = []
+        for i in range(n):
+            polygon.append(next(order))
+    return polygon
+
+
+def visual_inf(*cord):
     fig, ax = plt.subplots()
-    for _ in range(num_figures):
-        polygon = next(sequence)
-        ax.add_patch(Polygon(polygon, closed=True))
+    for i in cord:
+        for j in i:
+            print(j)
+            ax.add_patch(Polygon(j, closed=True))
     ax.autoscale()
     plt.axis('equal')
     plt.show()
 
 
-def tr_translate(args):
-    polygon, dx, dy = args
-    return [(x + dx, y + dy) for x, y in polygon]
+def tr_translate(cords, distance=10):  # Параллель относительно x
+    cords = cords[0], cords[1] + distance
+    return cords
 
 
-def tr_rotate(args):
-    polygon, angle, origin = args
-    ox, oy = origin
-    angle_rad = radians(angle)
-    return [(cos(angle_rad) * (x - ox) - sin(angle_rad) * (y - oy) + ox,
-             sin(angle_rad) * (x - ox) + cos(angle_rad) * (y - oy) + oy) for x, y in polygon]
+def tr_homothety(cords):
+    return -cords[0], -cords[1]
 
 
-def tr_symmetry(args):
-    polygon, axis = args
+def tr_symmetry(cords, axis='x'):
+    # Преобразование списка вершин в массив numpy
+    vertices = np.array(cords)
+
+    # Создание матрицы отражения
     if axis == 'x':
-        return [(x, -y) for x, y in polygon]
-    elif axis == 'y':
-        return [(-x, y) for x, y in polygon]
+        matrix = np.array([[1, 0], [0, -1]])
+    else:
+        np.array([[-1, 0], [0, 1]])
+
+    # Отражение вершин
+    polygon = np.dot(vertices, matrix)
+
+    # Возврат списка вершин после создания симметрии
+    return polygon.tolist()
 
 
-def tr_homothety(args):
-    polygon, factor, origin = args
-    ox, oy = origin
-    return [(ox + (x - ox) * factor, oy + (y - oy) * factor) for x, y in polygon]
+def tr_rotate(polygon, angle=45):
+    # Преобразование списка вершин в массив numpy
+    vertices = np.array(polygon)
+
+    # Создание матрицы поворота
+    rotation_matrix = np.array([[np.cos(np.radians(angle)), -np.sin(np.radians(angle))],
+                                [np.sin(np.radians(angle)), np.cos(np.radians(angle))]])
+
+    # Поворот вершин
+    rotated_vertices = np.dot(vertices, rotation_matrix)
+
+    # Возврат списка вершин после поворота
+    return rotated_vertices.tolist()
 
 
-if __name__ == "__main__":
-    pol_specs = [((0, 0), (0, 1), (1, 1), (1, 0)), ((0, 0), (0, 2), (2, 2), (2, 0))]
+a = generate_figure(gen_rectangle((0, 0), 5, 2, 7, 0), 7)
 
-    polygons = generate_pol(pol_specs)
+b = [list(map(lambda polygon: tr_translate(polygon, 5), i)) for i in a]
+c = [list(map(lambda polygon: tr_translate(polygon, 5), i)) for i in b]
+a = [list(map(lambda polygon: tr_rotate(polygon, -45), i)) for i in a]
+b = [list(map(lambda polygon: tr_rotate(polygon, -45), i)) for i in b]
+c = [list(map(lambda polygon: tr_rotate(polygon, -45), i)) for i in c]
+visual_inf(a, b, c)
 
-    transformations = [lambda p: (p[0] + 1, p[1] + 1)]
-    transformed_pol = transform_pol(polygons, transformations)
+a = generate_figure(gen_rectangle((-20, 0), 5, 2, 7, 0), 7)
+b = generate_figure(gen_rectangle((25, 0), 5, 2, -7, 0), 7)
+c = [list(map(lambda polygon: tr_rotate(polygon, -45), i)) for i in a]
+b = [list(map(lambda polygon: tr_rotate(polygon, 45), i)) for i in b]
+visual_inf(b, c)
 
-    visual(chain(polygons, transformed_pol))
-
-    rectangle_sequence = gen_rectangle((0, 0), 2, 1, 0.5)
-    visual_inf(rectangle_sequence)
-
-    triangle_sequence = gen_triangle((0, 0), 2, 0.5)
-    visual_inf(triangle_sequence)
-
-    hexagon_sequence = gen_hexagon((0, 0), 1, 0.5)
-    visual_inf(hexagon_sequence)
+a = generate_figure(gen_triangle((0, -7), 5, 7, 0), 7)
+b = [list(map(lambda polygon: tr_symmetry(polygon, 'x'), i)) for i in a]
+visual_inf(a, b)
