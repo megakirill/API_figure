@@ -4,7 +4,7 @@ from matplotlib.patches import Polygon  # используется для пре
 from functools import reduce
 import math
 import numpy as np
-
+import shapely.geometry as sg
 
 def generate_pol(pol_list):
     return map(lambda x: Polygon(x), pol_list)
@@ -69,7 +69,6 @@ def visual_inf(*cord):
     fig, ax = plt.subplots()
     for i in cord:
         for j in i:
-            print(j)
             ax.add_patch(Polygon(j, closed=True))
     ax.autoscale()
     plt.axis('equal')
@@ -81,8 +80,10 @@ def tr_translate(cords, distance=10):  # Параллель относитель
     return cords
 
 
-def tr_homothety(cords):
-    return -cords[0], -cords[1]
+
+def tr_homothety(polygon, scale_factor):
+    new_point = (polygon[0] * scale_factor, polygon[1] * scale_factor)
+    return new_point
 
 
 def tr_symmetry(cords, axis='x'):
@@ -118,20 +119,29 @@ def tr_rotate(polygon, angle=45):
 
 
 a = generate_figure(gen_rectangle((0, 0), 5, 2, 7, 0), 7)
-
+print(a)
 b = [list(map(lambda polygon: tr_translate(polygon, 5), i)) for i in a]
 c = [list(map(lambda polygon: tr_translate(polygon, 5), i)) for i in b]
 a = [list(map(lambda polygon: tr_rotate(polygon, -45), i)) for i in a]
 b = [list(map(lambda polygon: tr_rotate(polygon, -45), i)) for i in b]
 c = [list(map(lambda polygon: tr_rotate(polygon, -45), i)) for i in c]
-visual_inf(a, b, c)
+#visual_inf(a, b, c)
 
 a = generate_figure(gen_rectangle((-20, 0), 5, 2, 7, 0), 7)
 b = generate_figure(gen_rectangle((25, 0), 5, 2, -7, 0), 7)
 c = [list(map(lambda polygon: tr_rotate(polygon, -45), i)) for i in a]
 b = [list(map(lambda polygon: tr_rotate(polygon, 45), i)) for i in b]
-visual_inf(b, c)
+#visual_inf(b, c)
 
 a = generate_figure(gen_triangle((0, -7), 5, 7, 0), 7)
 b = [list(map(lambda polygon: tr_symmetry(polygon, 'x'), i)) for i in a]
-visual_inf(a, b)
+#visual_inf(a, b)
+
+
+a = generate_figure(gen_rectangle((0, 0), 0.75, 5, 0.5, -0.5), 5)
+c = [list(map(lambda polygon: tr_rotate(polygon, -45), i)) for i in a]
+b = [list(map(lambda polygon: tr_homothety(polygon, i * 0.1), j)) for i, j in enumerate(c)]
+a = [list(map(lambda polygon: (-polygon[0] - 0.4, -polygon[1]), i)) for i in b]
+visual_inf(b, a)
+
+

@@ -1,5 +1,3 @@
-from itertools import chain
-import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from matplotlib import path
 from shapely.geometry import Polygon
@@ -30,6 +28,7 @@ def flt_angle_point(cords, polygon):
 def flt_square(s, figure):
     polygon = Polygon(figure)
     s1 = polygon.area
+    print(s1)
     return s1 < s
 
 
@@ -39,10 +38,10 @@ def flt_short_side(l, figure):
 
     for i in range(len(figure) - 1):
         if len_shape(figure[i], figure[i + 1]) < l:
-            return True
+            return False
     if len_shape(figure[-1], figure[0]) < l:
-        return True
-    return False
+        return False
+    return True
 
 
 def flt_polygon_angles_inside(cords, polygon):
@@ -51,23 +50,13 @@ def flt_polygon_angles_inside(cords, polygon):
 
 def flt_point_inside(cords, polygon):
     pa = path.Path(polygon)
-    return pa.contains_point(cords)
+    return not(pa.contains_point(cords))
 
 
-def filter(polygon, f2=None, f3=None, f4=None, f5=None, f6=None): #Если в качестве параметра переданы только координаты, то происходит только проверка на выпуклость, если координаты и еще значения, то другие проверки
-    a = []
-    if any([f2, f3, f4, f5, f6]):
-        return flt_convex_polygon(polygon)
-    if f2!=None:
-        a.append(flt_angle_point(f2, polygon))
-    if f3!=None:
-        a.append(flt_square(f3, polygon))
-    if f4!=None:
-        a.append(flt_short_side(f4, polygon))
-    if f5!=None:
-        a.append(flt_point_inside(f5, polygon))
-    if f6!=None:
-        a.append(flt_polygon_angles_inside(f6, polygon))
-    return all(a)
+
+
+
+
+
 
 
